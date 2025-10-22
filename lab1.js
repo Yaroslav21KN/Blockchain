@@ -1,8 +1,7 @@
-// blockchain_demo.js
-const crypto = require('crypto');
-const axios = require('axios'); // Потрібно для частини 3
 
-// --- ---------- PoW Block ----------
+const crypto = require('crypto');
+const axios = require('axios');
+
 class PoWBlock {
     constructor(index, timestamp, data, previousHash = '') {
         this.index = index;
@@ -14,12 +13,12 @@ class PoWBlock {
     }
 
     calculateHash() {
-        // Конкатенація: index + timestamp + data + previousHash + nonce
+       
         const payload = String(this.index) + String(this.timestamp) + JSON.stringify(this.data) + this.previousHash + String(this.nonce);
         return crypto.createHash('sha256').update(payload).digest('hex');
     }
 
-    // Стандартний майнінг: треба початкові нулі
+    
     mineBlock(difficulty) {
         const target = '0'.repeat(difficulty);
         const start = Date.now();
@@ -36,7 +35,7 @@ class PoWBlock {
         return { iterations, timeMs, hash: this.hash };
     }
 
-    // Альтернативний майнер: наприклад перевірити, що 3-й символ хеша (index 2) є цифрою '3'
+    
     alternativeMineBlock() {
         const start = Date.now();
         let iterations = 0;
@@ -54,7 +53,7 @@ class PoWBlock {
     }
 }
 
-// --- ---------- PoW Blockchain ----------
+
 class PoWBlockchain {
     constructor(difficulty = 3) {
         this.chain = [this.createGenesisBlock()];
@@ -94,13 +93,13 @@ class PoWBlockchain {
                 return false;
             }
 
-            // Перевірка хеша
+            
             if (current.hash !== current.calculateHash()) {
                 console.warn(`Hash mismatch at index ${i}`);
                 return false;
             }
 
-            // Перевірка складності (для стандартних PoW-блоків)
+            
             if (!current.hash.startsWith('0'.repeat(this.difficulty))) {
                 console.warn(`Block ${i} does not meet difficulty (${this.difficulty})`);
                 return false;
@@ -111,36 +110,36 @@ class PoWBlockchain {
 }
 
 
-// ---------- Демонстрація PoW ----------
+
 function demoPoW() {
     console.log('--- PoW demo start ---');
     const bc = new PoWBlockchain(3);
 
-    // Додаємо 3 блоки
+    
     bc.addBlock({ amount: 4, from: 'A', to: 'B' });
     bc.addBlock({ amount: 10, from: 'C', to: 'D' });
     bc.addBlock({ amount: 2, from: 'E', to: 'F' });
 
-    console.log('isChainValid():', bc.isChainValid()); // очікуємо true
+    console.log('isChainValid():', bc.isChainValid()); 
 
-    // зламаємо другий блок (index=1)
+    
     console.log('--- Tampering block 1 data ---');
     bc.chain[1].data = "Hacked!";
-    console.log('isChainValid() after tamper:', bc.isChainValid()); // очікуємо false
+    console.log('isChainValid() after tamper:', bc.isChainValid()); 
 
-    // Повернемо назад коректні дані для демонстрації альтернативного майнера
+    
     bc.chain[1].data = { amount: 4, from: 'A', to: 'B' };
     bc.chain[1].hash = bc.chain[1].calculateHash();
 
     console.log('--- Alternative mining demo (new block) ---');
-    const resAlt = bc.addBlock({ amount: 99 }, true); // використає альтернативний майнер
-    // resAlt.meta містить iterations та timeMs
+    const resAlt = bc.addBlock({ amount: 99 }, true); 
+    
     console.log('Alt mining result meta:', resAlt.meta);
     console.log('--- PoW demo end ---\n');
 }
 
 
-// ---------- Частина 2: Proof-of-Stake (PoS) ----------
+// Частина 2: Proof-of-Stake (PoS)
 class Validator {
     constructor(name, stake) {
         this.name = name;
@@ -154,7 +153,7 @@ class PoSBlock {
         this.timestamp = timestamp;
         this.data = data;
         this.previousHash = previousHash;
-        this.validator = validator; // name
+        this.validator = validator; 
         this.hash = this.calculateHash();
     }
 
@@ -167,7 +166,7 @@ class PoSBlock {
 class PoSBlockchain {
     constructor(validators = []) {
         this.chain = [this.createGenesisBlock()];
-        this.validators = validators; // масив Validator
+        this.validators = validators; 
     }
 
     createGenesisBlock() {
@@ -178,7 +177,7 @@ class PoSBlockchain {
         return this.chain[this.chain.length - 1];
     }
 
-    // Вибір валідатора пропорційно stake
+    
     chooseValidator() {
         const totalStake = this.validators.reduce((s, v) => s + v.stake, 0);
         const r = Math.random() * totalStake;
@@ -189,7 +188,7 @@ class PoSBlockchain {
                 return v;
             }
         }
-        // На випадок числової похибки
+        
         return this.validators[this.validators.length - 1];
     }
 
@@ -223,11 +222,11 @@ class PoSBlockchain {
 }
 
 
-// ---------- Демонстрація PoS ----------
+
 function demoPoS() {
     console.log('--- PoS demo start ---');
 
-    // Створимо валідаторів
+   
     const validators = [
         new Validator('Alice', 5),
         new Validator('Bob', 10),
@@ -235,23 +234,23 @@ function demoPoS() {
     ];
     const pos = new PoSBlockchain(validators);
 
-    // Додаємо 5 блоків і записуємо хто валідатор
+    
     for (let i = 1; i <= 5; i++) {
         pos.addBlock({ tx: `tx${i}`, amount: i });
     }
 
-    console.log('isChainValid():', pos.isChainValid()); // очікуємо true
+    console.log('isChainValid():', pos.isChainValid()); 
 
-    // Злом: змінимо дані в одному блоці
+    
     console.log('--- Tampering PoS block 3 ---');
     pos.chain[3].data = "Hacked!";
-    console.log('isChainValid() after tamper:', pos.isChainValid()); // очікуємо false
+    console.log('isChainValid() after tamper:', pos.isChainValid()); 
 
-    // Повернемо назад для статистики
+    
     pos.chain[3].data = { tx: `tx3`, amount: 3 };
     pos.chain[3].hash = pos.chain[3].calculateHash();
 
-    // Тепер статистика: 50 блоків
+    
     console.log('--- PoS frequency test (50 blocks) ---');
     const freq = {};
     for (let v of validators) freq[v.name] = 0;
@@ -267,23 +266,20 @@ function demoPoS() {
 }
 
 
-// ---------- Частина 3: Etherscan API ----------
-/*
-  ПРИМІТКА: Вам потрібно зареєструватися на Etherscan.io і вставити свій API_KEY
-  в змінну ETHERSCAN_API_KEY нижче.
-*/
+//  Частина 3: Etherscan API 
+
 const ETHERSCAN_API_KEY = 'REPLACE_WITH_YOUR_API_KEY';
 
 async function demoEtherscan() {
     console.log('--- Etherscan demo start ---');
 
-    if (!ETHERSCAN_API_KEY || ETHERSCAN_API_KEY === 'REPLACE_WITH_YOUR_API_KEY') {
+    if (!ETHERSCAN_API_KEY || ETHERSCAN_API_KEY === 'BRUHYMZPB4TAJUT9RI7TVBRUYKF2QH1Y5P') {
         console.warn('Etherscan API key not provided. Заміни ETHERSCAN_API_KEY у коді на свій ключ.');
         return;
     }
 
     try {
-        // 1) Отримати номер останнього блоку
+        
         const base = 'https://api.etherscan.io/api';
         const resBlockNumber = await axios.get(base, {
             params: {
@@ -301,7 +297,7 @@ async function demoEtherscan() {
         const blockNumber = parseInt(blockNumberHex, 16);
         console.log('Latest block number (decimal):', blockNumber);
 
-        // 2) Отримати інформацію про цей блок
+        
         const resBlock = await axios.get(base, {
             params: {
                 module: 'proxy',
@@ -330,7 +326,7 @@ async function demoEtherscan() {
         console.log(' - hash:', block.hash);
         console.log(' - parentHash:', block.parentHash);
 
-        // 3) Середня кількість транзакцій за останні 5 блоків
+        
         let sumTx = txCount;
         let count = 1;
         let current = blockNumber;
@@ -364,7 +360,7 @@ async function demoEtherscan() {
 }
 
 
-// ---------- Run all demos ----------
+
 async function runAll() {
     demoPoW();
     demoPoS();
